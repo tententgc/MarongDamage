@@ -38,7 +38,9 @@ def upload_to_firebase(image_np, case_id):
     image_bytes = io.BytesIO(buffer)
 
     # Upload image bytes to Firebase
-    blob.upload_from_file(image_bytes, content_type="image/jpeg")
+    blob.upload_from_file(image_bytes, content_type="image/jpeg")# ✅ Firebase-hosted image link
+    blob.make_public()
+
 
     # Get the public URL
     return blob.public_url
