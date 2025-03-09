@@ -39,21 +39,15 @@ def score_popularity(value: int):
         return 1
 
 def get_population_score(district_name: str) :
-
     df = download_csv_from_firebase()
 
-   
     if "d_name" not in df.columns or "pop_total" not in df.columns:
         raise ValueError("CSV file must contain 'd_name' and 'pop_total' columns")
 
-
     df["pop_total"] = df["pop_total"].astype(str).str.replace(",", "").astype(int)
-
-
     filtered_row = df[df["d_name"] == district_name]
 
     if filtered_row.empty:
         raise ValueError(f"District '{district_name}' not found in the CSV file")
-
 
     return score_popularity(filtered_row.iloc[0]["pop_total"])
