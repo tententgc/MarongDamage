@@ -28,8 +28,10 @@ def get_coordinate(case_id):
     return None
 
 def get_all_coordinates():
-    base_url = "http://localhost:8080"
-    auth = HTTPBasicAuth("msaidmin@gmail.com", "hashed_password_2")
+    base_url = os.getenv("BASE_UR")
+    username = os.getenv("API_USERNAME")
+    password = os.getenv("API_PASSWORD")
+    auth = HTTPBasicAuth(username, password)
     
    
     response = requests.get(f"{base_url}/api/overview/all", auth=auth)
