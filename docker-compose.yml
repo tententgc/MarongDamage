@@ -1,0 +1,17 @@
+version: "3.9"
+
+services:
+  marong-ai:
+    build: .
+    container_name: marong-ai 
+    ports:
+      - "8000:8000"
+    env_file:
+      - .env
+    restart: always
+    networks:
+      - marong-network  
+
+networks:
+  marong-network:
+    external: true  
