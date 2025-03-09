@@ -7,7 +7,7 @@ from PIL import Image
 from datetime import datetime
 from pop_score import get_population_score
 from detection_image import process_image_with_model
-from get_coordinate import find_nearby_coordinates
+# from get_coordinate import find_nearby_coordinates
 from dotenv import load_dotenv
 import os
 import json

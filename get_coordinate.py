@@ -28,7 +28,7 @@ def get_coordinate(case_id):
     return None
 
 def get_all_coordinates():
-    base_url = os.getenv("BASE_UR")
+    base_url = os.getenv("BASE_URL")
     username = os.getenv("API_USERNAME")
     password = os.getenv("API_PASSWORD")
     auth = HTTPBasicAuth(username, password)
