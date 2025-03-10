@@ -37,7 +37,7 @@ STORAGE_BUCKET=
 python main.py
 ```
 or 
-### Install with Docker 
+### Install with Docker (currently have problem with network) 
 ```bash
 docker compose up -d -build
 ```
@@ -150,19 +150,5 @@ Obtional  can adding
 ]
 ```
 
-
-## Project Structure
-```
-incident-detection-api/
-├── main.py                   # Flask API server
-├── detection_image.py        # YOLO model processing & Firebase upload
-├── pop_score.py              # Population impact calculation
-├── firebase_service_key.json # Firebase authentication (DO NOT SHARE)
-├── requirements.txt          # Required dependencies
-└── README.md                 # Project documentation
-```
-
-
-# Hellos
 
 
