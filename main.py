@@ -9,6 +9,7 @@ from pop_score import get_population_score
 from detection_image import process_image_with_model
 # from get_coordinate import find_nearby_coordinates
 from dotenv import load_dotenv
+from case_group import get_grouped_cases
 import os
 import json
 
@@ -23,6 +24,8 @@ class ImageProcessorAPI:
     
     def setup_routes(self):
         self.app.route('/process-image', methods=['POST'])(self.process_image)
+        self.app.route('/group_case', methods=['GET'])(self.group_case)
+
     
     def load_image(self, image_path):
         """Loads an image from a local path or URL into a NumPy array."""
@@ -37,6 +40,12 @@ class ImageProcessorAPI:
             return np.array(image)  
         except Exception as e:
             raise RuntimeError(f"Failed to load image: {str(e)}")
+    def group_case(self):
+        try:
+            cases = get_grouped_cases()
+            return jsonify(cases), 200
+        except Exception as e:
+            return jsonify({"error": str(e)}), 500
     
     def process_image(self):
         try:
