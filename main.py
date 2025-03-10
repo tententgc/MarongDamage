@@ -50,6 +50,9 @@ class ImageProcessorAPI:
     def process_image(self):
         try:
             data = request.get_json()
+            if not data:
+                return jsonify({"error": "Invalid JSON format"}), 400
+
             case_id = data.get('case_id')
             image_path = data.get('image_url')
             model_name = data.get('model_name')
@@ -57,16 +60,28 @@ class ImageProcessorAPI:
 
             if not all([case_id, model_name, city_name, image_path]):
                 return jsonify({"error": "Missing required fields: 'case_id', 'model_name', 'city_name', 'image_path'"}), 400
-            
-            image_np = self.load_image(image_path)
-            result = process_image_with_model(model_name, image_np, case_id)
-        
-            pop_score = get_population_score(city_name)
-            print(result["damage_score"], pop_score)
-            result["damage_score"] += pop_score
 
+            # Load the image
+            try:
+                image_np = self.load_image(image_path)
+            except Exception as e:
+                return jsonify({"error": f"Failed to load image: {str(e)}"}), 500
+
+            # Process image using the model
+            try:
+                result = process_image_with_model(model_name, image_np, case_id)
+            except Exception as e:
+                return jsonify({"error": f"Model processing failed: {str(e)}"}), 500
+
+            # Get population score
+            try:
+                pop_score = get_population_score(city_name)
+            except Exception as e:
+                return jsonify({"error": f"Failed to get population score: {str(e)}"}), 500
+
+            result["damage_score"] += pop_score
             update_at = datetime.now().strftime('%Y-%m-%dT%H:%M:%S.%f')[:-3]
-        
+
             update_data = {
                 "caseid": case_id, 
                 "damaged_value": result["damage_score"],
@@ -74,20 +89,30 @@ class ImageProcessorAPI:
                 "detail_detect": result["classes_detected"],
                 "update_at": update_at
             }
-           
-            
+
             headers = {"Content-Type": "application/x-www-form-urlencoded"}
             auth = (self.username, self.password)
-            api_url =  f"{self.base_url}/api/myreport/updateCase"
-            update_response = requests.put(api_url, data=update_data, headers=headers, auth=auth)
 
-            if update_response.status_code != 200:
-                return jsonify({"error": "Failed to update case", "details": update_response.text}), update_response.status_code
+            if not self.base_url or not self.username or not self.password:
+                return jsonify({"error": "Missing required API credentials"}), 500
 
-            return jsonify(update_response.json()), update_response.status_code 
+            api_url = f"{self.base_url}/api/myreport/updateCase"
             
+            try:
+                update_response = requests.put(api_url, data=update_data, headers=headers, auth=auth)
+                if update_response.status_code != 200:
+                    return jsonify({
+                        "error": "Failed to update case",
+                        "details": update_response.text
+                    }), update_response.status_code
+            except requests.exceptions.RequestException as e:
+                return jsonify({"error": f"API request failed: {str(e)}"}), 500
+
+            return jsonify(update_response.json()), update_response.status_code
+
         except Exception as e:
-            return jsonify({"error": str(e)}), 500
+            return jsonify({"eprror": str(e)}), 500
+
     
     def run(self, host='0.0.0.0', port=8000, debug=True):
         self.app.run(host=host, port=port, debug=debug)

@@ -36,7 +36,7 @@ def detect_objects(image_np: np.ndarray, model: YOLO):
     return processed_image, detected_classes
 
 def upload_image_to_firebase(image_np: np.ndarray, case_id: str) -> str:
-    
+ 
     bucket = storage.bucket()
     
     time_stampe = datetime.now().strftime('%Y-%m-%dT%H:%M:%S.%f')[:-3]
