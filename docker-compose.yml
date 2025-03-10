@@ -1,17 +1,12 @@
-version: "3.9"
+version: "3.8"
 
 services:
-  marong-ai:
+  flask-app:
     build: .
-    container_name: marong-ai 
     ports:
       - "8000:8000"
-    env_file:
-      - .env
+    volumes:
+      - .:/app
+    environment:
+      - PYTHONUNBUFFERED=1
     restart: always
-    networks:
-      - marong-network  
-
-networks:
-  marong-network:
-    external: true  
