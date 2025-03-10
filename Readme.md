@@ -22,8 +22,17 @@ pip install -r requirements.txt
 ### 3. Configure Firebase
 - Download the **Firebase Admin SDK JSON** file from Firebase Console.
 - Save it as `firebase_service_key.json` in the project root.
+  
+### 5. config the env
+```bash
+API_USERNAME=
+API_PASSWORD=
+BASE_URL=
+CREDENTIALS_PATH=
+STORAGE_BUCKET=
+```
 
-### 4. Run the API Server
+### 5. Run the API Server
 ```bash
 python main.py
 ```
@@ -39,13 +48,16 @@ The server will start at `http://0.0.0.0:8000`.
 
 ### **Endpoint: `/process-image`**
 - **Method:** `POST`
+- **Port:** `8000`
 - **Request Body (JSON):**
+```required```
 ```json
 {
-    "case_id": "12345",
-    "image_path": "https://example.com/image.jpg",  
-    "model_name": "road",  
-    "city_name": "Bangkok"
+    "case_id" : "4",
+    "image_url": "image/road1.jpg",
+    "model_name": "Road_Damage", 
+    "city_name": "เขตห้วยขวาง", 
+
 }
 
 ```
@@ -55,15 +67,18 @@ Obtional  can adding
  "latitude": "100",
  "longtitude": "50" 
 ```
-- **Response:**
+- **Response to database:**
 ```json
 {
-    "case_id": "12345",
-    "class_detected": ["Cracks", "Potholes"],
-    "damage_score": 9,
-    "pop_score": 500000,
-    "processed_image_url": "https://firebasestorage.googleapis.com/..."
-}
+    "data": {
+        "caseId": 4,
+        "damaged_value": "9",
+        "detail_detect": "Surface_Defects",
+        "picture_done": "https://storage.googleapis.com/marong-a42b2.firebasestorage.app/output_images/output_4_2025-03-10T01%3A57%3A09.866.jpg",
+        "status": "waiting",
+        "updateAt": "2025-03-10T01:57:15.425"
+    },
+    "statusCode": "200",
 ```
 
 ### **Using Local Images**
@@ -75,6 +90,66 @@ Obtional  can adding
     "city_name": "Chiang Mai"
 }
 ```
+
+### **Endpoint: `/group_case`**
+- **Method:** `GET`
+- **Port:** `8000`
+```json
+[  [
+        {
+            "case_id": "7",
+            "category": "Wire_Damage",
+            "date_closed": null,
+            "date_opened": "null",
+            "location": {
+                "coordinates": [
+                    "13.722347",
+                    "101"
+                ],
+                "description": "location detail"
+            },
+            "picture": "picture",
+            "picture_done": null,
+            "status": "Waiting"
+        }
+    ],
+    [
+        {
+            "case_id": "8",
+            "category": "Damaged_sidewalk",
+            "date_closed": null,
+            "date_opened": "null",
+            "location": {
+                "coordinates": [
+                    "13.722347",
+                    "100.562345"
+                ],
+                "description": "location detail"
+            },
+            "picture": "picture",
+            "picture_done": null,
+            "status": "Waiting"
+        },
+        {
+            "case_id": "9",
+            "category": "Damaged_sidewalk",
+            "date_closed": null,
+            "date_opened": "null",
+            "location": {
+                "coordinates": [
+                    "13.722348",
+                    "100.562345"
+                ],
+                "description": "location detail"
+            },
+            "picture": "picture",
+            "picture_done": null,
+            "status": "Waiting"
+        }
+    ]
+]
+```
+
 
 ## Project Structure
 ```
