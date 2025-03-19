@@ -28,18 +28,20 @@ class ImageProcessorAPI:
 
     
     def load_image(self, image_path):
-        """Loads an image from a local path or URL into a NumPy array."""
+        """Loads an image from a local path or URL into a NumPy array, including .webp."""
         try:
             if image_path.startswith("http"):  
                 response = requests.get(image_path, stream=True)
                 response.raise_for_status()
-                image_bytes = io.BytesIO(response.content)  
-                image = Image.open(image_bytes).convert("RGB")  
-            else:  
-                image = Image.open(image_path).convert("RGB")
-            return np.array(image)  
+                image_bytes = io.BytesIO(response.content)
+            else:
+                image_bytes = image_path  # Direct file path
+
+            image = Image.open(image_bytes).convert("RGB")  # Ensure RGB conversion
+            return np.array(image)
         except Exception as e:
             raise RuntimeError(f"Failed to load image: {str(e)}")
+        
     def group_case(self):
         try:
             cases = get_grouped_cases()
@@ -90,6 +92,10 @@ class ImageProcessorAPI:
                 "update_at": update_at
             }
 
+            cancel_data = { 
+                "detail" : "No damage detected"
+            }
+
             headers = {"Content-Type": "application/x-www-form-urlencoded"}
             auth = (self.username, self.password)
 
@@ -97,9 +103,24 @@ class ImageProcessorAPI:
                 return jsonify({"error": "Missing required API credentials"}), 500
 
             api_url = f"{self.base_url}/api/myreport/updateCase"
+            cancel_url = f"{self.base_url}/api/case/{case_id}/changeStatus/cancelCase"
             
             try:
+                cancel = False
+                if update_data.get("detail_detect")==["No damage detected"]:
+                    cancel = True
+                print(cancel)
+
+
                 update_response = requests.put(api_url, data=update_data, headers=headers, auth=auth)
+                if cancel:
+                    cancel_response = requests.post(cancel_url, headers=headers, auth=auth,data=cancel_data)
+                    if cancel_response.status_code != 200:
+                        return jsonify({
+                            "error": "Failed to cancel case",
+                            "details": cancel_response.text
+                        }), cancel_response.status_code 
+
                 if update_response.status_code != 200:
                     return jsonify({
                         "error": "Failed to update case",
