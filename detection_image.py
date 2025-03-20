@@ -21,7 +21,7 @@ def get_model_path(model_name: str):
     """Returns the model path based on the given model name."""
     return f"weight/{model_name}.pt"
 
-def detect_objects(image_np: np.ndarray, model: YOLO):
+def detect_objects(image_np: np.ndarray, model: YOLO,threshold: float = 0.5): 
     """Runs YOLO object detection on an image array."""
     results = model.predict(image_np, save_conf=True, show=True)
     processed_image = results[0].plot()
@@ -30,25 +30,37 @@ def detect_objects(image_np: np.ndarray, model: YOLO):
     if results[0].masks is not None:
         for index, _ in enumerate(results[0].masks.data):
             class_id = int(results[0].boxes[index].cls.item())
-            class_name = model.names[class_id]
-            detected_classes.append(class_name)
-    
+            confidence = results[0].boxes[index].conf.item()
+            
+            if confidence >= threshold:
+                class_name = model.names[class_id]
+                detected_classes.append((class_name, confidence))
+
     return processed_image, detected_classes
 
-def upload_image_to_firebase(image_np: np.ndarray, case_id: str) -> str:
- 
+def upload_image_to_firebase(image_np: np.ndarray, case_id: str, format: str = "jpg") -> str:
+
+    if format.lower() not in ["jpg", "png", "webp"]:
+        raise ValueError("Unsupported format. Use 'jpg', 'png', or 'webp'.")
+
     bucket = storage.bucket()
     
-    time_stampe = datetime.now().strftime('%Y-%m-%dT%H:%M:%S.%f')[:-3]
-    filename = f"output_images/output_{case_id}_{time_stampe}.jpg"
+    timestamp = datetime.now().strftime('%Y-%m-%dT%H:%M:%S.%f')[:-3]
+    filename = f"output_images/output_{case_id}_{timestamp}.{format}"
     blob = bucket.blob(filename)
+
+    # Encode image in specified format
+    encode_param = [int(cv2.IMWRITE_JPEG_QUALITY), 95] if format == "jpg" else []
+    success, buffer = cv2.imencode(f".{format}", image_np, encode_param)
     
-    _, buffer = cv2.imencode(".jpg", image_np)
+    if not success:
+        raise RuntimeError(f"Failed to encode image as {format}")
+
     image_bytes = io.BytesIO(buffer)
-    
-    blob.upload_from_file(image_bytes, content_type="image/jpeg")
+
+    blob.upload_from_file(image_bytes, content_type=f"image/{format}")
     blob.make_public()
-    
+
     return blob.public_url
 
 def calculate_damage_score(detected_classes: list, model_name: str):
@@ -73,12 +85,21 @@ def calculate_damage_score(detected_classes: list, model_name: str):
 def process_image_with_model(model_name: str, image_np: np.ndarray, case_id: str):
     """Loads the YOLO model, detects objects, uploads the processed image, and calculates a damage score."""
     model = YOLO(get_model_path(model_name))
+
     processed_image, detected_classes = detect_objects(image_np, model)
+
     image_url = upload_image_to_firebase(processed_image, case_id)
     damage_score = calculate_damage_score(detected_classes, model_name)
+
+    if detected_classes == []:
+        detected_classes = ["No damage detected"]
+
+    print(damage_score, detected_classes, image_url) 
     
     return {
         "damage_score": damage_score,
         "classes_detected": detected_classes,
         "image_url": image_url
     }
+
+
